@@ -1,0 +1,208 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.gantt-wrap { padding: 1rem 0; overflow-x: auto; }
+.gantt-title { font-size: 16px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 1rem; }
+.gantt-subtitle { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 1.5rem; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 1.25rem; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--color-text-secondary); }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+table.gantt { border-collapse: collapse; min-width: 900px; width: 100%; }
+table.gantt th { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); padding: 4px 6px; white-space: nowrap; border-bottom: 0.5px solid var(--color-border-tertiary); }
+table.gantt td { padding: 3px 6px; border-bottom: 0.5px solid var(--color-border-tertiary); vertical-align: middle; }
+.task-name { font-size: 12px; color: var(--color-text-primary); white-space: nowrap; min-width: 220px; max-width: 240px; overflow: hidden; text-overflow: ellipsis; }
+.phase-row td { background: var(--color-background-secondary); }
+.phase-label { font-size: 12px; font-weight: 500; color: var(--color-text-primary); }
+.cell { width: 22px; height: 22px; }
+.bar { height: 14px; border-radius: 3px; }
+.bar-research { background: #534AB7; }
+.bar-firmware { background: #1D9E75; }
+.bar-hardware { background: #BA7517; }
+.bar-integration { background: #185FA5; }
+.bar-testing { background: #A32D2D; }
+.bar-docs { background: #888780; opacity: 0.75; }
+.bar-milestone { background: transparent; display: flex; align-items: center; justify-content: center; }
+.diamond { width: 10px; height: 10px; background: #D85A30; transform: rotate(45deg); border-radius: 1px; }
+.month-header { text-align: center; font-size: 11px; font-weight: 500; color: var(--color-text-secondary); border-right: 0.5px solid var(--color-border-tertiary); padding: 4px 0; }
+.week-cell { width: 22px; }
+.today-cell { background: rgba(83,74,183,0.08); }
+.date-label { font-size: 10px; color: var(--color-text-tertiary); white-space: nowrap; }
+</style>
+
+<div class="gantt-wrap">
+  <h2 class="sr-only">Trainer Kit Project Gantt Chart, December 2025 to July 2026</h2>
+  <p class="gantt-title">Trainer kit — project schedule</p>
+  <p class="gantt-subtitle">December 2025 – 15 July 2026 &nbsp;·&nbsp; Defence date: 15 July 2026</p>
+
+  <div class="legend">
+    <span class="legend-item"><span class="legend-dot" style="background:#534AB7"></span>Research & planning</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#1D9E75"></span>Firmware & algorithms</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#BA7517"></span>Hardware & fabrication</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#185FA5"></span>Integration & UI</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#A32D2D"></span>Testing & validation</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#888780;opacity:.75"></span>Documentation updates</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#D85A30;transform:rotate(45deg);border-radius:1px"></span>Milestone</span>
+  </div>
+
+  <div id="gantt-container"></div>
+</div>
+
+<script>
+const WEEK_PX = 22;
+
+const weeks = [];
+const labels = [];
+let d = new Date(2025, 11, 1);
+const end = new Date(2026, 6, 20);
+while (d <= end) {
+  weeks.push(new Date(d));
+  d.setDate(d.getDate() + 7);
+}
+
+function wIdx(dateStr) {
+  const t = new Date(dateStr);
+  for (let i = 0; i < weeks.length; i++) {
+    const w = weeks[i];
+    const wEnd = new Date(w); wEnd.setDate(wEnd.getDate() + 7);
+    if (t >= w && t < wEnd) return i;
+  }
+  if (t < weeks[0]) return 0;
+  return weeks.length - 1;
+}
+
+function span(startStr, endStr) {
+  const s = wIdx(startStr);
+  const e = wIdx(endStr);
+  return { s, len: Math.max(1, e - s + 1) };
+}
+
+const phases = [
+  {
+    label: "Phase 1 — Research, domain mapping & familiarisation",
+    color: "research",
+    tasks: [
+      { name: "1.1  Multi-module pin budget & protocol mapping", start: "2025-12-02", end: "2025-12-10" },
+      { name: "1.2  Actuation & automation domain simulation", start: "2025-12-04", end: "2025-12-18" },
+      { name: "1.3  Dual-domain isolated power architecture", start: "2025-12-11", end: "2025-12-22" },
+      { name: "      Familiarisation — components & toolchain", start: "2025-12-02", end: "2025-12-31" },
+      { name: "      Documentation update 1 — research notes", start: "2025-12-22", end: "2026-01-05", color: "docs" },
+    ]
+  },
+  {
+    label: "Phase 2 — Core firmware & algorithm subsystems",
+    color: "firmware",
+    tasks: [
+      { name: "2.1  Sensing driver & CSV stream calibration", start: "2026-01-05", end: "2026-01-19" },
+      { name: "2.2  Actuation kinematics & mapping implementation", start: "2026-01-07", end: "2026-01-22" },
+      { name: "2.3  Automation state machine & tracking logic", start: "2026-01-12", end: "2026-02-02" },
+      { name: "      Documentation update 2 — firmware draft", start: "2026-01-26", end: "2026-02-09", color: "docs" },
+    ]
+  },
+  {
+    label: "Phase 3 — Hardware fabrication & mechanical construction",
+    color: "hardware",
+    tasks: [
+      { name: "3.1  8-sensor PCB layout & assembly", start: "2026-02-09", end: "2026-03-09" },
+      { name: "3.2  Actuation frame machining & pivot refinement", start: "2026-02-16", end: "2026-03-18" },
+      { name: "3.3  Automation metering & distribution chute", start: "2026-02-23", end: "2026-03-25" },
+      { name: "      Prototyping sprint (late Feb – mid March)", start: "2026-02-16", end: "2026-03-16", color: "docs" },
+      { name: "      Documentation update 3 — hardware build log", start: "2026-03-16", end: "2026-03-30", color: "docs" },
+    ]
+  },
+  {
+    label: "Phase 4 — Inter-module integration & interface mapping",
+    color: "integration",
+    tasks: [
+      { name: "4.1  Multi-rail power & ground plane integration", start: "2026-04-06", end: "2026-04-20" },
+      { name: "4.2  LCD display paging & UI calibration", start: "2026-04-14", end: "2026-04-27" },
+      { name: "      Electronics finishing & fittings (late April – late June)", start: "2026-04-20", end: "2026-06-22" },
+      { name: "      Documentation update 4 — integration wiring", start: "2026-04-27", end: "2026-05-11", color: "docs" },
+    ]
+  },
+  {
+    label: "Phase 5 — Testing, calibration & thesis documentation",
+    color: "testing",
+    tasks: [
+      { name: "5.1  Two-point white balance & joint angle tuning", start: "2026-05-18", end: "2026-06-01" },
+      { name: "5.2  Full-line stress testing & cross-talk evaluation", start: "2026-06-01", end: "2026-06-15" },
+      { name: "5.3  Sorting validation (Aₛ) & Chapter 3 draft", start: "2026-06-08", end: "2026-07-06" },
+      { name: "      Documentation update 5 — final thesis draft", start: "2026-06-22", end: "2026-07-10", color: "docs" },
+    ]
+  }
+];
+
+const milestones = [
+  { label: "Prototyping complete", date: "2026-03-16" },
+  { label: "Electronics & fittings done", date: "2026-06-23" },
+  { label: "Thesis submitted", date: "2026-07-07" },
+  { label: "Defence", date: "2026-07-15" },
+];
+
+const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function buildMonthHeaders() {
+  let html = '<tr><th class="task-name" style="text-align:left;font-size:11px;color:var(--color-text-secondary);min-width:220px">Task</th>';
+  let wI = 0;
+  let y = 2025, m = 11;
+  while (wI < weeks.length) {
+    let count = 0;
+    const baseMonth = weeks[wI].getMonth();
+    const baseYear = weeks[wI].getFullYear();
+    while (wI + count < weeks.length && weeks[wI + count].getMonth() === baseMonth && weeks[wI + count].getFullYear() === baseYear) count++;
+    html += `<th colspan="${count}" class="month-header" style="border-left:0.5px solid var(--color-border-tertiary)">${monthNames[baseMonth]} ${baseYear}</th>`;
+    wI += count;
+  }
+  html += '</tr>';
+  return html;
+}
+
+function buildRow(task, phaseColor) {
+  const color = task.color || phaseColor;
+  const { s, len } = span(task.start, task.end);
+  let html = `<tr><td class="task-name" title="${task.name}">${task.name}</td>`;
+  for (let i = 0; i < weeks.length; i++) {
+    const isToday = weeks[i].getMonth() === 4 && weeks[i].getFullYear() === 2026;
+    if (i === s) {
+      html += `<td colspan="${len}" style="padding:4px 2px;${isToday?'background:rgba(83,74,183,0.06)':''}"><div class="bar bar-${color}" style="width:100%;min-width:${len*WEEK_PX-4}px"></div></td>`;
+      i += len - 1;
+    } else {
+      html += `<td class="week-cell${isToday?' today-cell':''}"></td>`;
+    }
+  }
+  html += '</tr>';
+  return html;
+}
+
+function buildMilestoneRow(m) {
+  const { s } = span(m.date, m.date);
+  let html = `<tr><td class="task-name" style="color:var(--color-text-secondary);font-size:11px;font-style:italic">${m.label}</td>`;
+  for (let i = 0; i < weeks.length; i++) {
+    if (i === s) {
+      html += `<td class="week-cell" style="padding:4px 2px;text-align:center"><div style="width:10px;height:10px;background:#D85A30;transform:rotate(45deg);border-radius:1px;margin:auto"></div></td>`;
+    } else {
+      html += `<td class="week-cell"></td>`;
+    }
+  }
+  html += '</tr>';
+  return html;
+}
+
+let html = '<table class="gantt">';
+html += '<thead>' + buildMonthHeaders() + '</thead><tbody>';
+
+for (const phase of phases) {
+  html += `<tr class="phase-row"><td class="phase-label" colspan="${weeks.length + 1}" style="padding:6px 6px 4px">${phase.label}</td></tr>`;
+  for (const task of phase.tasks) {
+    html += buildRow(task, phase.color);
+  }
+}
+
+html += `<tr class="phase-row"><td class="phase-label" colspan="${weeks.length + 1}" style="padding:6px 6px 4px">Milestones</td></tr>`;
+for (const m of milestones) {
+  html += buildMilestoneRow(m);
+}
+
+html += '</tbody></table>';
+document.getElementById('gantt-container').innerHTML = html;
+</script>
